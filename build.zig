@@ -32,6 +32,7 @@ pub fn build(b: *std.Build) void {
         "default",
         "--no-reboot",
         "-nographic",
+        "-kernel",
     });
 
     debug_cmd.addArgs(&.{
