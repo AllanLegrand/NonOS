@@ -113,9 +113,7 @@ fn proc_a_entry() void {
 
     while (true) {
         common.putchar('A');
-        common.print("A switching to B: prev_sp={x}, next_sp={x}\n", .{ proc_a.sp, proc_b.sp });
         switch_context(&proc_a.sp, &proc_b.sp);
-        common.putchar('C');
         delay();
     }
 }
@@ -125,9 +123,7 @@ fn proc_b_entry() void {
 
     while (true) {
         common.putchar('B');
-        common.print("B switching to A: prev_sp={x}, next_sp={x}\n", .{ proc_b.sp, proc_a.sp });
         switch_context(&proc_b.sp, &proc_a.sp);
-        common.putchar('D');
         delay();
     }
 }
