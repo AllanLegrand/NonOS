@@ -83,19 +83,20 @@ pub fn print(comptime fmt: []const u8, args: anytype) void {
                 if (@typeInfo(T) != .Int and @typeInfo(T) != .ComptimeInt)
                     @compileError("Format specifier 'd' expects an integer, got " ++ @typeName(T));
 
-                comptime var magnitude = argument;
+                var magnitude = argument;
 
                 if (magnitude < 0) {
                     putchar('-');
                     magnitude = -magnitude;
                 }
 
-                comptime var divisor = 1;
-                inline while (magnitude / divisor > 9)
+                var divisor: @TypeOf(magnitude) = 1;
+                while (magnitude / divisor > 9)
                     divisor *= 10;
 
-                inline while (divisor > 0) {
-                    putchar('0' + magnitude / divisor);
+                while (divisor > 0) {
+                    const digit: u8 = @intCast(magnitude / divisor);
+                    putchar('0' + digit);
                     magnitude %= divisor;
                     divisor /= 10;
                 }
