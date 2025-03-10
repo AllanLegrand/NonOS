@@ -1,3 +1,5 @@
+// exception/kernel_entry.zig
+
 const common = @import("../common.zig");
 const trap_frame = @import("trap_frame.zig").trap_frame;
 const READ_CSR = @import("READ_CSR.zig").READ_CSR;

@@ -1,3 +1,5 @@
+/* kernel.ld */
+
 ENTRY(boot)
 
 SECTIONS {

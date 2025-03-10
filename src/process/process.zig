@@ -1,3 +1,5 @@
+// process/process.zig
+
 pub const PROCS_MAX = 8; // Maximum number of processes
 
 pub const process = struct {
@@ -8,3 +10,6 @@ pub const process = struct {
 };
 
 pub var procs: [PROCS_MAX]process = undefined;
+
+pub var current_proc: *process = undefined;
+pub var idle_proc: *process = undefined;

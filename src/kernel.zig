@@ -1,6 +1,9 @@
+// kernel.zig
+
 const common = @import("common.zig");
 const process = @import("process.zig");
 const exception = @import("exception.zig");
+const process_mod = process.process_mod;
 
 const __bss = @extern([*]u8, .{ .name = "__bss" });
 const __bss_end = @extern([*]u8, .{ .name = "__bss_end" });
@@ -41,7 +44,11 @@ export fn kernel_main() void {
     process.proc_a = process.create_process(@intFromPtr(&process.proc_a_entry));
     process.proc_b = process.create_process(@intFromPtr(&process.proc_b_entry));
 
-    process.proc_a_entry();
+    process_mod.idle_proc = process.create_process(undefined);
+    process_mod.idle_proc.pid = 0;
+    process_mod.current_proc = process_mod.idle_proc;
+
+    process.yield();
 
     const src = @src();
     common.PANIC(src.file, src.line, "unreachable here!", .{});

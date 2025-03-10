@@ -1,3 +1,5 @@
+// exception.zig
+
 pub const trap_frame = @import("exception/trap_frame.zig").trap_frame;
 pub const kernel_entry = @import("exception/kernel_entry.zig").kernel_entry;
 pub const handle_trap = @import("exception/kernel_entry.zig").handle_trap;

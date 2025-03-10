@@ -1,3 +1,5 @@
+// exception/trap_frame.zig
+
 pub const trap_frame = packed struct {
     ra: usize,
     gp: usize,

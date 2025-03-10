@@ -1,8 +1,11 @@
+// process.zig
+
 pub const switch_context = @import("process/switch_context.zig").switch_context;
 pub const create_process = @import("process/create_process.zig").create_process;
-pub const process = @import("process/process.zig").process;
-pub const procs = @import("process/process.zig").procs;
-pub const PROCS_MAX = @import("process/process.zig").PROCS_MAX;
+pub const process_mod = @import("process/process.zig");
+pub const process = process_mod.process;
+pub const PROCS_MAX = process_mod.PROCS_MAX;
+pub const yield = @import("process/yield.zig").yield;
 
 const common = @import("common.zig");
 
@@ -20,7 +23,7 @@ pub fn proc_a_entry() void {
 
     while (true) {
         common.putchar('A');
-        switch_context(&proc_a.sp, &proc_b.sp);
+        yield();
         delay();
     }
 }
@@ -30,7 +33,7 @@ pub fn proc_b_entry() void {
 
     while (true) {
         common.putchar('B');
-        switch_context(&proc_b.sp, &proc_a.sp);
+        yield();
         delay();
     }
 }
