@@ -2,13 +2,11 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.resolveTargetQuery(.{ .cpu_arch = .riscv32, .os_tag = .freestanding, .abi = .none });
 
-    const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseSmall });
-
     const kernel_exe = b.addExecutable(.{
         .name = "kernel.elf",
         .root_source_file = b.path("src/kernel.zig"),
         .target = target,
-        .optimize = optimize,
+        .optimize = .ReleaseSmall,
         .strip = false,
     });
 

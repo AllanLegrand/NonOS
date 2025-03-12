@@ -7,7 +7,7 @@
 - [x] 07. Kernel Panic
 - [x] 08. Exception
 - [x] 09. Memory Allocation
-- [ ] 10. Process
+- [x] 10. Process
 - [ ] 11. Page Table 
 - [ ] 12. Application
 - [ ] 13. User Mode

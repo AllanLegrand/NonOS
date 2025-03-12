@@ -22,11 +22,14 @@ pub noinline fn yield() void {
     if (next == process_mod.current_proc)
         return;
 
+    asm volatile (
+        \\ csrw sscratch, %[sscratch]
+        :
+        : [sscratch] "r" (@intFromPtr(&next.stack) + next.stack.len),
+    );
+
     const prev = process_mod.current_proc;
     process_mod.current_proc = next;
 
-    common.print("Before switch: prev.sp={x}, next.sp={x}\n", .{ prev.sp, next.sp });
-
     switch_context(&prev.sp, &next.sp);
-    common.print("After switch: back in pid={d}, sp={x}\n", .{ process_mod.current_proc.pid, process_mod.current_proc.sp });
 }
