@@ -1,9 +1,9 @@
 // common.zig
 
-pub const print = @import("common/print.zig").print;
-pub const memset = @import("common/memset.zig").memset;
-pub const memcpy = @import("common/memcpy.zig").memcpy;
-pub const strcpy = @import("common/strcpy.zig").strcpy;
+pub const print = @import("common/io.zig").print;
+pub const putchar = @import("common/io.zig").putchar;
+pub const memset = @import("common/memory.zig").memset;
+pub const memcpy = @import("common/memory.zig").memcpy;
+pub const strcpy = @import("common/string.zig").strcpy;
 pub const eql = @import("common/eql.zig").eql;
 pub const PANIC = @import("common/panic.zig").PANIC;
-pub const putchar = @import("common/putchar.zig").putchar;

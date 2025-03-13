@@ -1,8 +1,41 @@
-// exception/kernel_entry.zig
+// exception/trap.zig
 
 const common = @import("../common.zig");
-const trap_frame = @import("trap_frame.zig").trap_frame;
-const READ_CSR = @import("READ_CSR.zig").READ_CSR;
+const READ_CSR = @import("../exception.zig").READ_CSR;
+
+pub const trap_frame = packed struct {
+    ra: usize,
+    gp: usize,
+    tp: usize,
+    t0: usize,
+    t1: usize,
+    t2: usize,
+    t3: usize,
+    t4: usize,
+    t5: usize,
+    t6: usize,
+    a0: usize,
+    a1: usize,
+    a2: usize,
+    a3: usize,
+    a4: usize,
+    a5: usize,
+    a6: usize,
+    a7: usize,
+    s0: usize,
+    s1: usize,
+    s2: usize,
+    s3: usize,
+    s4: usize,
+    s5: usize,
+    s6: usize,
+    s7: usize,
+    s8: usize,
+    s9: usize,
+    s10: usize,
+    s11: usize,
+    sp: usize,
+};
 
 pub export fn handle_trap(f: *trap_frame) void {
     _ = f;

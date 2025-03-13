@@ -3,7 +3,6 @@
 const common = @import("common.zig");
 const process = @import("process.zig");
 const exception = @import("exception.zig");
-const process_mod = process.process_mod;
 const page = @import("page.zig");
 
 const __bss = @extern([*]u8, .{ .name = "__bss" });
@@ -26,12 +25,12 @@ export fn kernel_main() void {
 
     common.print("Hello {s}\n", .{"world"});
 
-    process.proc_a = process.create_process(@intFromPtr(&process.proc_a_entry));
-    process.proc_b = process.create_process(@intFromPtr(&process.proc_b_entry));
+    process.proc_a = process.process.create_process(@intFromPtr(&process.proc_a_entry));
+    process.proc_b = process.process.create_process(@intFromPtr(&process.proc_b_entry));
 
-    process_mod.idle_proc = process.create_process(undefined);
-    process_mod.idle_proc.pid = 0;
-    process_mod.current_proc = process_mod.idle_proc;
+    process.idle_proc = process.process.create_process(undefined);
+    process.idle_proc.pid = 0;
+    process.current_proc = process.idle_proc;
 
     process.yield();
 
