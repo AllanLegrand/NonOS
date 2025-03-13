@@ -3,7 +3,7 @@ const putchar = @import("putchar.zig").putchar;
 pub fn print(comptime fmt: []const u8, args: anytype) void {
     const ArgsType = @TypeOf(args);
 
-    if (@typeInfo(ArgsType) != .Struct)
+    if (@typeInfo(ArgsType) != .@"struct")
         @compileError("Expected tuple or struct argument, found " ++ @typeName(ArgsType));
 
     comptime var expected_args: usize = 0;
@@ -73,14 +73,14 @@ pub fn print(comptime fmt: []const u8, args: anytype) void {
 
         switch (fmt[fmt_i]) {
             's' => {
-                if (@typeInfo(T) != .Pointer)
+                if (@typeInfo(T) != .pointer)
                     @compileError("Format specifier 's' expects an string, got " ++ @typeName(T));
 
                 for (argument) |c|
                     putchar(c);
             },
             'd' => {
-                if (@typeInfo(T) != .Int and @typeInfo(T) != .ComptimeInt)
+                if (@typeInfo(T) != .int and @typeInfo(T) != .comptime_int)
                     @compileError("Format specifier 'd' expects an integer, got " ++ @typeName(T));
 
                 var magnitude = argument;
@@ -102,7 +102,7 @@ pub fn print(comptime fmt: []const u8, args: anytype) void {
                 }
             },
             'x' => {
-                if (@typeInfo(T) != .Int and @typeInfo(T) != .ComptimeInt)
+                if (@typeInfo(T) != .int and @typeInfo(T) != .comptime_int)
                     @compileError("Format specifier 'x' expects an integer, got " ++ @typeName(T));
 
                 comptime var i = 7;
