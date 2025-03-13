@@ -6,6 +6,7 @@ pub const process = struct {
     pid: usize, // Process ID
     state: enum { PROC_UNUSED, PROC_RUNNABLE },
     sp: usize, // Stack pointer
+    page_table: [*]usize,
     stack: [8192]u8, // Kernel stack
 };
 
