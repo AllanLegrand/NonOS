@@ -8,9 +8,9 @@
 - [x] 08. Exception
 - [x] 09. Memory Allocation
 - [x] 10. Process
-- [ ] 11. Page Table 
-- [ ] 12. Application
-- [ ] 13. User Mode
-- [ ] 14. System call
+- [x] 11. Page Table 
+- [x] 12. Application
+- [x] 13. User Mode
+- [x] 14. System call
 - [ ] 15. Disk I/O 
 - [ ] 16. File System

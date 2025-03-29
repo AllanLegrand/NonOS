@@ -1,5 +1,7 @@
 // common/io.zig
 
+const syscall = @import("../syscall.zig");
+
 const sbiret = struct {
     err: usize,
     value: usize,
@@ -36,7 +38,20 @@ pub export fn putchar(ch: u8) void {
     _ = sbi_call(ch, 0, 0, 0, 0, 0, 0, 1);
 }
 
-pub fn print(comptime fmt: []const u8, args: anytype) void {
+pub export fn getchar() usize {
+    const ret = sbi_call(0, 0, 0, 0, 0, 0, 0, 2);
+    return ret.err;
+}
+
+pub fn print_user(comptime fmt: []const u8, args: anytype) void {
+    print(syscall.putchar, fmt, args);
+}
+
+pub fn print_kernel(comptime fmt: []const u8, args: anytype) void {
+    print(putchar, fmt, args);
+}
+
+fn print(comptime putchar_fn: fn (u8) callconv(.c) void, comptime fmt: []const u8, args: anytype) void {
     const ArgsType = @TypeOf(args);
 
     if (@typeInfo(ArgsType) != .@"struct")
@@ -85,7 +100,7 @@ pub fn print(comptime fmt: []const u8, args: anytype) void {
     inline while (fmt_i < fmt.len) : (fmt_i += 1) {
         if (fmt[fmt_i] == '}') {
             if (fmt_i + 1 < fmt.len and fmt[fmt_i + 1] == '}') {
-                putchar('}');
+                putchar_fn('}');
                 fmt_i += 1;
                 continue;
             }
@@ -93,14 +108,14 @@ pub fn print(comptime fmt: []const u8, args: anytype) void {
         }
 
         if (fmt[fmt_i] != '{') {
-            putchar(fmt[fmt_i]);
+            putchar_fn(fmt[fmt_i]);
             continue;
         }
 
         fmt_i += 1;
 
         if (fmt[fmt_i] == '{') {
-            putchar('{');
+            putchar_fn('{');
             continue;
         }
 
@@ -109,20 +124,20 @@ pub fn print(comptime fmt: []const u8, args: anytype) void {
 
         switch (fmt[fmt_i]) {
             's' => {
-                if (@typeInfo(T) != .pointer)
+                if (@typeInfo(T) != .pointer and @typeInfo(T) != .array)
                     @compileError("Format specifier 's' expects an string, got " ++ @typeName(T));
 
                 for (argument) |c|
-                    putchar(c);
+                    putchar_fn(c);
             },
             'd' => {
                 if (@typeInfo(T) != .int and @typeInfo(T) != .comptime_int)
                     @compileError("Format specifier 'd' expects an integer, got " ++ @typeName(T));
 
-                var magnitude = argument;
+                var magnitude: usize = @intCast(argument);
 
                 if (magnitude < 0) {
-                    putchar('-');
+                    putchar_fn('-');
                     magnitude = -magnitude;
                 }
 
@@ -132,7 +147,7 @@ pub fn print(comptime fmt: []const u8, args: anytype) void {
 
                 while (divisor > 0) {
                     const digit: u8 = @intCast(magnitude / divisor);
-                    putchar('0' + digit);
+                    putchar_fn('0' + digit);
                     magnitude %= divisor;
                     divisor /= 10;
                 }
@@ -144,7 +159,7 @@ pub fn print(comptime fmt: []const u8, args: anytype) void {
                 comptime var i = 7;
                 inline while (i >= 0) : (i -= 1) {
                     const nibble: usize = (argument >> (i * 4)) & 0xf;
-                    putchar("0123456789abcdef"[nibble]);
+                    putchar_fn("0123456789abcdef"[nibble]);
                 }
             },
             else => unreachable,

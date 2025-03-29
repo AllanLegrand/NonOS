@@ -1,6 +1,6 @@
 // common/panic.zig
 
-const print = @import("../common.zig").print;
+const print = @import("../common.zig").print_kernel;
 
 pub fn PANIC(comptime file: []const u8, comptime line: usize, comptime fmt: []const u8, args: anytype) noreturn {
     print("PANIC: {s}:{d}: ", .{ file, line });

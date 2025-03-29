@@ -4,17 +4,19 @@ const common = @import("common.zig");
 const __kernel_base = @import("kernel.zig").__kernel_base;
 const __free_ram_end = @import("kernel.zig").__free_ram_end;
 const page = @import("page.zig");
+const USER_BASE = @import("kernel.zig").USER_BASE;
+const SSTATUS_SPIE = @import("kernel.zig").SSTATUS_SPIE;
 
 pub const PROCS_MAX = 8; // Maximum number of processes
 
 pub const process = struct {
     pid: usize, // Process ID
-    state: enum { PROC_UNUSED, PROC_RUNNABLE },
+    state: enum { PROC_UNUSED, PROC_RUNNABLE, PROC_EXITED },
     sp: usize, // Stack pointer
     page_table: [*]usize,
     stack: [8192]u8, // Kernel stack
 
-    pub fn create_process(pc: usize) *process {
+    pub fn create_process(image: []const u8) *process {
         var proc: ?*process = null;
 
         var i: usize = 0;
@@ -36,7 +38,7 @@ pub const process = struct {
         const aligned_top: usize = stack_top & ~@as(usize, 0xF);
         var sp: [*]usize = @ptrFromInt(aligned_top - 13 * @sizeOf(usize));
 
-        sp[0] = pc; // ra
+        sp[0] = @intFromPtr(&user_entry); // ra
 
         inline for (1..13) |reg|
             sp[reg] = 0;
@@ -44,8 +46,21 @@ pub const process = struct {
         const page_table = @as([*]usize, @alignCast(@ptrCast(page.alloc_pages(1))));
         var paddr: usize = @intFromPtr(__kernel_base);
         const end_addr: usize = @intFromPtr(__free_ram_end);
+
+        // Map kernel pages.
         while (paddr < end_addr) : (paddr += page.PAGE_SIZE)
             page.map_page(page_table, paddr, paddr, page.PAGE_R | page.PAGE_W | page.PAGE_X);
+
+        // Map user pages.
+        var off: usize = 0;
+        while (off < image.len) : (off += page.PAGE_SIZE) {
+            const page_addr = page.alloc_pages(1);
+            const remaining = image.len - off;
+            const copy_size = if (page.PAGE_SIZE <= remaining) page.PAGE_SIZE else remaining;
+
+            common.memcpy(page_addr[0..copy_size], image[off..][0..copy_size], copy_size);
+            page.map_page(page_table, USER_BASE + off, @intFromPtr(page_addr), page.PAGE_U | page.PAGE_R | page.PAGE_W | page.PAGE_X);
+        }
 
         unwrapped_proc.pid = i + 1;
         unwrapped_proc.state = .PROC_RUNNABLE;
@@ -138,31 +153,13 @@ pub noinline fn yield() void {
     process.switch_context(&prev.sp, &next.sp);
 }
 
-fn delay() void {
-    for (0..30000000) |_| {
-        asm volatile ("nop");
-    }
-}
-
-pub var proc_a: *process = undefined;
-pub var proc_b: *process = undefined;
-
-pub fn proc_a_entry() void {
-    common.print("starting process A\n", .{});
-
-    while (true) {
-        common.putchar('A');
-        yield();
-        delay();
-    }
-}
-
-pub fn proc_b_entry() void {
-    common.print("starting process B\n", .{});
-
-    while (true) {
-        common.putchar('B');
-        yield();
-        delay();
-    }
+fn user_entry() callconv(.Naked) void {
+    asm volatile (
+        \\ csrw sepc, %[sepc]
+        \\ csrw sstatus, %[sstatus]
+        \\ sret
+        :
+        : [sepc] "r" (USER_BASE),
+          [sstatus] "r" (SSTATUS_SPIE),
+    );
 }

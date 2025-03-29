@@ -1,7 +1,12 @@
 // exception/trap.zig
 
 const common = @import("../common.zig");
+const process = @import("../process.zig");
+const syscall = @import("../syscall.zig");
+const yield = @import("../process.zig").yield;
 const READ_CSR = @import("../exception.zig").READ_CSR;
+const WRITE_CSR = @import("../exception.zig").WRITE_CSR;
+const SCAUSE_ECALL = 8;
 
 pub const trap_frame = packed struct {
     ra: usize,
@@ -38,20 +43,56 @@ pub const trap_frame = packed struct {
 };
 
 pub export fn handle_trap(f: *trap_frame) void {
-    _ = f;
-
     const scause = READ_CSR("scause");
     const stval = READ_CSR("stval");
-    const user_pc = READ_CSR("sepc");
+    var user_pc = READ_CSR("sepc");
 
-    const src = @src();
-    common.PANIC(src.file, src.line, "unexpected trap scause={x}, stval={x}, sepc={x}", .{ scause, stval, user_pc });
+    if (scause == SCAUSE_ECALL) {
+        handle_syscall(f);
+        user_pc += 4;
+    } else {
+        const src = @src();
+        common.PANIC(src.file, src.line, "unexpected trap scause={x}, stval={x}, sepc={x}", .{ scause, stval, user_pc });
+    }
+
+    WRITE_CSR("sepc", user_pc);
+}
+
+fn handle_syscall(f: *trap_frame) void {
+    const call: syscall.SYSCALL = @enumFromInt(f.a3);
+    switch (call) {
+        .PUTCHAR => {
+            common.putchar(@intCast(f.a0));
+        },
+        .GETCHAR => {
+            while (true) {
+                const ch = common.getchar();
+                if (ch >= 0 and ch != 0xffffffff) {
+                    f.a0 = ch;
+                    break;
+                }
+
+                yield();
+            }
+        },
+        .EXIT => {
+            common.print_kernel("process {d} exited\n", .{process.current_proc.pid});
+            process.current_proc.state = .PROC_EXITED;
+            yield();
+            const src = @src();
+            common.PANIC(src.file, src.line, "unreachable", .{});
+        },
+        else => {
+            const src = @src();
+            common.PANIC(src.file, src.line, "unexpected syscall a3={x}", .{f.a3});
+        },
+    }
 }
 
 pub export fn kernel_entry() align(4) callconv(.Naked) void {
     asm volatile (
     // Retrieve the kernel stack of the running process from sscratch.
-        \\ csrw sscratch, sp
+        \\ csrrw sp, sscratch, sp
         \\ addi sp, sp, -4 * 31
         \\ sw ra,  4 * 0(sp)
         \\ sw gp,  4 * 1(sp)
@@ -83,6 +124,8 @@ pub export fn kernel_entry() align(4) callconv(.Naked) void {
         \\ sw s9,  4 * 27(sp)
         \\ sw s10, 4 * 28(sp)
         \\ sw s11, 4 * 29(sp)
+        \\ addi a0, sp, 4 * 31
+        \\sw a0, -4(a0)
 
         // Retrieve and save the sp at the time of exception.
         \\ csrr a0, sscratch
